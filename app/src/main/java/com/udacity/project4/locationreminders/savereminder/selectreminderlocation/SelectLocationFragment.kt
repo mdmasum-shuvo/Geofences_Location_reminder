@@ -37,7 +37,7 @@ import java.util.*
 
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback
-   {
+{
 
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by inject()
@@ -190,70 +190,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback
     private fun enableMyLocation() {
         if (isPermissionGranted()) {
             mMap?.isMyLocationEnabled = true
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                checkDeviceLocationSettings()
-            }
+
         } else {
-
             Log.d(TAG, "Request foreground only location permission")
-
             requestPermissions(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_LOCATION_PERMISSION
             )
         }
         mMap?.moveCamera(CameraUpdateFactory.zoomIn())
 
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun checkDeviceLocationSettings(resolve: Boolean = true) {
-        val locationRequest = LocationRequest.create().apply {
-            priority = LocationRequest.PRIORITY_LOW_POWER
-        }
-        val requestBuilder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
-        val settingsClient = LocationServices.getSettingsClient(activity!!)
-        val locationSettingsResponseTask =
-            settingsClient.checkLocationSettings(requestBuilder.build())
-        locationSettingsResponseTask.addOnFailureListener { exception ->
-            if (exception is ResolvableApiException && resolve) {
-                try {
-                    startIntentSenderForResult(
-                        exception.resolution.intentSender,
-                        REQUEST_TURN_DEVICE_LOCATION_ON,
-                        null,
-                        0,
-                        0,
-                        0,
-                        null
-                    )
-                } catch (sendEx: IntentSender.SendIntentException) {
-                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
-                }
-            } else {
-
-                Snackbar.make(
-                    view!!,
-                    R.string.location_required_error, Snackbar.LENGTH_LONG
-                ).setAction(android.R.string.ok) {
-                    checkDeviceLocationSettings()
-                }.show()
-            }
-
-        }
-
-        locationSettingsResponseTask.addOnCompleteListener {
-            if (it.isSuccessful) {
-                mMap!!.isMyLocationEnabled = true
-            }
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
-            // We don't rely on the result code, but just check the location setting again
-            checkDeviceLocationSettings(false)
-        }
     }
 
     override fun onRequestPermissionsResult(
